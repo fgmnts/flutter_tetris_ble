@@ -1,4 +1,4 @@
-package com.example.flutter_tetris
+package be.mct.tetris
 
 import io.flutter.embedding.android.FlutterActivity
 

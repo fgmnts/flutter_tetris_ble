@@ -1,0 +1,2 @@
+C:/Users/pibeeckm/Work/flutter-tetris-esp32-ble/android/app/.cxx/Debug/1snc3i19/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/pibeeckm/Work/flutter-tetris-esp32-ble/android/app/.cxx/Debug/1snc3i19/armeabi-v7a/CMakeFiles/rebuild_cache.dir

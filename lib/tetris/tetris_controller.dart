@@ -1,10 +1,10 @@
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'dart:async';
-import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-import 'providers/BluetoothProvider.dart';
 import 'configs.dart';
 import 'feature/tetris_methods/methods.dart';
 import 'model/enum/game_info.dart';
@@ -26,11 +26,9 @@ class TetrisController extends StatefulWidget {
   const TetrisController({
     super.key,
     required this.child,
-    required this.bleProvider,
   });
 
   final Widget child;
-  final BluetoothProvider bleProvider;
 
   static TetrisControllerState of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<_InheritedTetris>()!.data;
@@ -41,7 +39,8 @@ class TetrisController extends StatefulWidget {
 }
 
 class TetrisControllerState extends State<TetrisController> {
-  // late BluetoothProvider bleProvider;
+  // TetrisControllerState({required this.bluetoothProvider});
+
   Panels fieldState = [];
   MinoStateModel currentMinoStateModel = MinoStateModel.init();
   List<MinoConfig> nextMinos = [];
@@ -52,10 +51,8 @@ class TetrisControllerState extends State<TetrisController> {
   GameInfo gameInfo = GameInfo.waiting;
   Timer? timer;
 
-  StreamSubscription<dynamic>? bleScanSubscription;
-  StreamSubscription<BluetoothConnectionState>? bleStreamSubscription;
-
   bool get isPlaying => gameInfo == GameInfo.playing;
+  StreamSubscription<List<int>>? bleSubscription; // added
 
   @override
   void initState() {
@@ -63,14 +60,16 @@ class TetrisControllerState extends State<TetrisController> {
     super.initState();
   }
 
+  // added
+  // Don't forget to cancel the bleSubscription when it's no longer needed
   @override
-  void dispose() {
-    bleStreamSubscription?.cancel();
-    bleScanSubscription?.cancel();
+  Future<void> dispose() async {
+    await bleSubscription?.cancel();
+
     super.dispose();
   }
 
-  void init() {
+  Future<void> init() async {
     fieldState = getInitialField();
     nextMinos.clear();
     nextMinos = setNextMinos(nextMinos: nextMinos);
@@ -79,102 +78,6 @@ class TetrisControllerState extends State<TetrisController> {
     isTspin = false;
     isKept = false;
     gameInfo = GameInfo.waiting;
-    scanForBluetoothDevices();
-  }
-
-  // Bluetooth verbinding maken
-  Future<void> scanForBluetoothDevices() async {
-    print("SCAN FOR BLUETOOTH DEVICES");
-    bleScanSubscription = FlutterBluePlus.onScanResults.listen(
-      (results) {
-        if (results.isNotEmpty) {
-          final ScanResult r = results.last; // the most recently found device
-          print(
-            '${r.device.remoteId}: "${r.advertisementData.advName}" found!',
-          );
-
-          connectToBluetoothDevice(r.device);
-        }
-      },
-      onError: (e) => print(e),
-    );
-
-    FlutterBluePlus.cancelWhenScanComplete(bleScanSubscription!);
-
-    await FlutterBluePlus.adapterState
-        .where((val) => val == BluetoothAdapterState.on)
-        .first;
-
-    await FlutterBluePlus.startScan(
-      withRemoteIds: ['40:22:D8:08:4A:5A'],
-      timeout: const Duration(seconds: 15),
-    );
-  }
-
-  Future<void> connectToBluetoothDevice(BluetoothDevice device) async {
-// listen for disconnection
-    bleStreamSubscription =
-        device.connectionState.listen((BluetoothConnectionState state) async {
-      if (state == BluetoothConnectionState.disconnected) {
-        print("Disconnected");
-        // 1. typically, start a periodic timer that tries to
-        //    reconnect, or just call connect() again right now
-        // 2. you must always re-discover services after disconnection!
-        // print("${device.disconnectReasonCode} ${device.disconnectReasonDescription}");
-      }
-    });
-
-// cleanup: cancel subscription when disconnected
-// Note: `delayed:true` lets us receive the `disconnected` event in our handler
-// Note: `next:true` means cancel on *next* disconnection. Without this, it
-//   would cancel immediately because we're already disconnected right now.
-    device.cancelWhenDisconnected(
-      bleStreamSubscription!,
-      delayed: true,
-      next: true,
-    );
-    await device.connect();
-
-    unawaited(findAndSubscribeUARTService(device));
-  }
-
-  Future<void> findAndSubscribeUARTService(BluetoothDevice device) async {
-// Note: You must call discoverServices after every re-connection!
-    List<BluetoothService> services = await device.discoverServices();
-    services.forEach((service) async {
-      if (service.serviceUuid.toString().toUpperCase() ==
-          '6E400001-B5A3-F393-E0A9-E50E24DCCA9E') {
-        print("UART service found");
-        const txCharacteristicUuid = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E';
-
-        var characteristics = service.characteristics;
-        var txCharacteristic = characteristics.firstWhere(
-          (element) =>
-              element.characteristicUuid.toString().toUpperCase() ==
-              txCharacteristicUuid,
-          orElse: () => throw Exception('TX characteristic not found'),
-        ); // Error handling)
-
-        final subscription = txCharacteristic.onValueReceived.listen((value) {
-          String msg = utf8.decode(value);
-          print("a new value is received via BLE: $value");
-          print('as string? ${msg}');
-
-          widget.bleProvider.pushMessage(msg);
-          // onValueReceived is updated:
-          //   - anytime read() is called
-          //   - anytime a notification arrives (if subscribed)
-        });
-
-// cleanup: cancel subscription when disconnected
-        device.cancelWhenDisconnected(subscription);
-
-// subscribe
-// Note: If a characteristic supports both **notifications** and **indications**,
-// it will default to **notifications**. This matches how CoreBluetooth works on iOS.
-        await txCharacteristic.setNotifyValue(true);
-      }
-    });
   }
 
   void left() {
