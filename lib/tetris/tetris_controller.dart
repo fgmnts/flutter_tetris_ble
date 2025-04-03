@@ -42,12 +42,12 @@ class TetrisControllerState extends State<TetrisController> {
   // TetrisControllerState({required this.bluetoothProvider});
 
   Panels fieldState = [];
-  MinoStateModel currentMinoStateModel = MinoStateModel.init();
+  var currentMinoStateModel = MinoStateModel.init();
   List<MinoConfig> nextMinos = [];
   MinoConfig? keepMino;
-  int score = 0;
-  bool isTspin = false;
-  bool isKept = false;
+  var score = 0;
+  var isTspin = false;
+  var isKept = false;
   GameInfo gameInfo = GameInfo.waiting;
   Timer? timer;
 

@@ -1,15 +1,16 @@
 // Tetris Field configs
 const horizontalBlockNumber = 8;
-const verticalBlockNumber = 15 + notShowMinoVerticalNumber;
+const int verticalBlockNumber = 15 + notShowMinoVerticalNumber;
 
-const holizontalDisplayBlockNumber =
+const int holizontalDisplayBlockNumber =
     horizontalBlockNumber + 2 + (4 + 1) * 2 + 1;
-const verticalDisplayBlockNumber = verticalBlockNumber + 1 + (4 + 1) * 2 + 1;
+const int verticalDisplayBlockNumber =
+    verticalBlockNumber + 1 + (4 + 1) * 2 + 1;
 const verticalFieldSizeRatio = 0.7;
 
-const controllerWidthBlockNumber = horizontalBlockNumber + 5;
+const int controllerWidthBlockNumber = horizontalBlockNumber + 5;
 
-const futureMinoSizeRatio = 2 / 3;
+const double futureMinoSizeRatio = 2 / 3;
 
 const verticalStartPosition = 0;
 const horizontalStartPosition = 3;
